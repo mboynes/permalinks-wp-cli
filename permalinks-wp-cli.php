@@ -63,8 +63,8 @@ class Permalinks_CLI_Command extends WP_CLI_Command {
 		do {
 			$posts = get_posts( array(
 				'post_type'      => 'any',
-				'posts_per_page' => $per_page,
 				'post_status'    => 'any',
+				'posts_per_page' => $per_page,
 				'offset'         => $per_page * $page++
 			) );
 			if ( !$posts || is_wp_error( $posts ) )
@@ -78,7 +78,7 @@ class Permalinks_CLI_Command extends WP_CLI_Command {
 						// WP_CLI::line( "URI found: {$match[2]}" );
 						$url = home_url( $match[2] );
 						$resulting_url = $this->process_url( $url );
-						if ( $url != $resulting_url ) {
+						if ( $resulting_url && $url != $resulting_url ) {
 							$post->post_content = preg_replace( '!(?:' . preg_quote( home_url() ) . ")?{$match[2]}!i", $resulting_url, $post->post_content );
 							$modified = true;
 						}
@@ -101,6 +101,13 @@ class Permalinks_CLI_Command extends WP_CLI_Command {
 	}
 
 
+	/**
+	 * Fetch a URL and respond as appropriate. If the response is 200, return the url. If it's a 301, fetch the location sent.
+	 * Otherwise, leave it be.
+	 *
+	 * @param string $url
+	 * @return mixed a URL on success and false on failure
+	 */
 	private function process_url( $url ) {
 		$response = wp_remote_head( $url );
 		// WP_CLI::line( $url . ': ' . print_r( $response, 1 ) );
@@ -117,6 +124,7 @@ class Permalinks_CLI_Command extends WP_CLI_Command {
 		} else {
 			WP_CLI::line( "Error fetching {$url}: General error" );
 		}
+		return false;
 	}
 
 }
